@@ -1,12 +1,11 @@
 import { Store } from '@ngrx/store';
-import { ComponentRef } from 'angular2/core';
-
+import { ComponentRef } from '@angular/core';
 
 export function hotModuleReplacement(
-  bootloader: (state?: any) => Promise<ComponentRef>,
+  bootloader: (state?: any) => Promise<ComponentRef<any>>,
   module: any
 ) {
-  let COMPONENT_REF: ComponentRef;
+  let COMPONENT_REF: ComponentRef<any>;
   let DATA = !!module.hot.data ?
     module.hot.data.state :
     undefined;
@@ -16,7 +15,7 @@ export function hotModuleReplacement(
   console.time('bootstrap');
   if (document.readyState === 'complete') {
     bootloader(DATA)
-      .then((cmpRef: ComponentRef) => COMPONENT_REF = cmpRef)
+      .then((cmpRef: ComponentRef<any>) => COMPONENT_REF = cmpRef)
       .then((cmpRef => (console.timeEnd('bootstrap'), cmpRef)));
   } else {
     document.addEventListener('DOMContentLoaded', () => {
@@ -26,8 +25,10 @@ export function hotModuleReplacement(
     });
   }
 
-  function saveState(appState: Store<any>) {
-    return appState.getState();
+  function saveState(appStore: Store<any>) {
+    let state;
+    appStore.take(1).subscribe(s => state = s);
+    return state;
   }
 
   function beforeunload(event) {
@@ -57,7 +58,7 @@ export function hotModuleReplacement(
 
     (<any>Object).assign(data, { state  });
 
-    COMPONENT_REF.dispose();
+    COMPONENT_REF.destroy();
 
     newNode.style.display = currentDisplay;
 
